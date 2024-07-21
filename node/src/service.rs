@@ -3,12 +3,12 @@
 use futures::FutureExt;
 use node_template_runtime::{self, opaque::Block, RuntimeApi};
 use sc_client_api::{Backend, BlockBackend};
-use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
 use sc_consensus_grandpa::SharedVoterState;
+use sc_consensus_manual_seal::{run_manual_seal, EngineCommand, ManualSealParams};
 use sc_service::{error::Error as ServiceError, Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryWorker};
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
-use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
+use sp_consensus_babe::inherents::InherentDataProvider;
 use std::{sync::Arc, time::Duration};
 
 pub(crate) type FullClient = sc_service::TFullClient<
@@ -36,7 +36,51 @@ pub type Service = sc_service::PartialComponents<
 	),
 >;
 
-pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
+type FullGrandpaBlockImport<RuntimeApi, Executor> = sc_consensus_grandpa::GrandpaBlockImport<
+	FullBackend,
+	Block,
+	FullClient<RuntimeApi, Executor>,
+	FullSelectChain,
+>;
+
+#[allow(clippy::type_complexity)]
+pub fn new_partial<RuntimeApi, Executor>(
+	config: &Configuration,
+	consensus_manual: bool,
+) -> Result<
+	sc_service::PartialComponents<
+		FullClient<RuntimeApi, Executor>,
+		FullBackend,
+		FullSelectChain,
+		sc_consensus::DefaultImportQueue<Block>,
+		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
+		(
+			sc_consensus_babe::BabeBlockImport<
+				Block,
+				FullClient<RuntimeApi, Executor>,
+				FullGrandpaBlockImport<RuntimeApi, Executor>,
+			>,
+			sc_consensus_babe::BabeLink<Block>,
+			Option<sc_consensus_babe::BabeWorkerHandle<Block>>,
+			sc_consensus_grandpa::LinkHalf<
+				Block,
+				FullClient<RuntimeApi, Executor>,
+				FullSelectChain,
+			>,
+			Option<Telemetry>,
+		),
+	>,
+	ServiceError,
+>
+where
+	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>
+		+ Send
+		+ Sync
+		+ 'static,
+	RuntimeApi::RuntimeApi: RuntimeApiCollection,
+	Executor: sc_executor::NativeExecutionDispatch + 'static,
+	Executor: sc_executor::sp_wasm_interface::HostFunctions + 'static,
+{
 	let telemetry = config
 		.telemetry_endpoints
 		.clone()
@@ -48,7 +92,11 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
 		})
 		.transpose()?;
 
+	#[cfg(feature = "native")]
 	let executor = sc_service::new_wasm_executor::<sp_io::SubstrateHostFunctions>(config);
+	#[cfg(not(feature = "native"))]
+	let executor = sc_service::new_wasm_executor(config);
+
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
 			config,
@@ -72,44 +120,60 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
 		client.clone(),
 	);
 
+	let client_ = client.clone();
 	let (grandpa_block_import, grandpa_link) = sc_consensus_grandpa::block_import(
 		client.clone(),
 		GRANDPA_JUSTIFICATION_PERIOD,
-		&client,
+		&(client_ as Arc<_>),
 		select_chain.clone(),
 		telemetry.as_ref().map(|x| x.handle()),
 	)?;
 
-	let cidp_client = client.clone();
-	let import_queue =
-		sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _>(ImportQueueParams {
-			block_import: grandpa_block_import.clone(),
-			justification_import: Some(Box::new(grandpa_block_import.clone())),
-			client: client.clone(),
-			create_inherent_data_providers: move |parent_hash, _| {
-				let cidp_client = cidp_client.clone();
-				async move {
-					let slot_duration = sc_consensus_aura::standalone::slot_duration_at(
-						&*cidp_client,
-						parent_hash,
-					)?;
+	let justification_import = grandpa_block_import.clone();
+
+	let (babe_block_import, babe_link) = sc_consensus_babe::block_import(
+		sc_consensus_babe::configuration(&*client)?,
+		grandpa_block_import,
+		client.clone(),
+	)?;
+
+	let (import_queue, babe_worker_handle) = if consensus_manual {
+		let import_queue = sc_consensus_manual_seal::import_queue(
+			Box::new(babe_block_import.clone()),
+			&task_manager.spawn_essential_handle(),
+			config.prometheus_registry(),
+		);
+		(import_queue, None)
+	} else {
+		let slot_duration = babe_link.config().slot_duration();
+		let (queue, handle) =
+			sc_consensus_babe::import_queue(sc_consensus_babe::ImportQueueParams {
+				link: babe_link.clone(),
+				block_import: babe_block_import.clone(),
+				justification_import: Some(Box::new(justification_import)),
+				client: client.clone(),
+				select_chain: select_chain.clone(),
+				create_inherent_data_providers: move |_, ()| async move {
 					let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
-					let slot =
-						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-							*timestamp,
-							slot_duration,
-						);
+					let slot = InherentDataProvider::from_timestamp_and_slot_duration(
+						*timestamp,
+						slot_duration,
+					);
 
 					Ok((slot, timestamp))
-				}
-			},
-			spawner: &task_manager.spawn_essential_handle(),
-			registry: config.prometheus_registry(),
-			check_for_equivocation: Default::default(),
-			telemetry: telemetry.as_ref().map(|x| x.handle()),
-			compatibility_mode: Default::default(),
-		})?;
+				},
+				spawner: &task_manager.spawn_essential_handle(),
+				registry: config.prometheus_registry(),
+				telemetry: telemetry.as_ref().map(|x| x.handle()),
+				offchain_tx_pool_factory:
+					sc_transaction_pool_api::OffchainTransactionPoolFactory::new(
+						transaction_pool.clone(),
+					),
+			})?;
+
+		(queue, Some(handle))
+	};
 
 	Ok(sc_service::PartialComponents {
 		client,
@@ -119,32 +183,63 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
 		keystore_container,
 		select_chain,
 		transaction_pool,
-		other: (grandpa_block_import, grandpa_link, telemetry),
+		other: (babe_block_import, babe_link, babe_worker_handle, grandpa_link, telemetry),
 	})
 }
 
 /// Builds a new service for a full client.
-pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
-	let sc_service::PartialComponents {
-		client,
-		backend,
-		mut task_manager,
-		import_queue,
-		keystore_container,
-		select_chain,
-		transaction_pool,
-		other: (block_import, grandpa_link, mut telemetry),
-	} = new_partial(&config)?;
-
-	let mut net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
+pub fn new_full<
+	RuntimeApi,
+	Executor,
+	N: sc_network::NetworkBackend<Block, <Block as sp_runtime::traits::Block>::Hash>,
+>(
+	config: Configuration,
+	sealing: crate::cli::Sealing,
+) -> Result<TaskManager, ServiceError>
+where
+	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>
+		+ Send
+		+ Sync
+		+ 'static,
+	RuntimeApi::RuntimeApi: RuntimeApiCollection,
+	Executor: sc_executor::NativeExecutionDispatch + 'static,
+	Executor: sc_executor::sp_wasm_interface::HostFunctions + 'static,
+{
+    let sc_service::PartialComponents {
+        client,
+        backend,
+        mut task_manager,
+        import_queue,
+        keystore_container,
+        select_chain,
+        transaction_pool,
+        other: (block_import, babe_link, babe_worker_handle, grandpa_link, mut telemetry),
+    } = new_partial::<RuntimeApi, Executor>(&config, sealing.is_manual_consensus())?;
 
 	let grandpa_protocol_name = sc_consensus_grandpa::protocol_standard_name(
-		&client.block_hash(0).ok().flatten().expect("Genesis block exists; qed"),
-		&config.chain_spec,
-	);
-	let (grandpa_protocol_config, grandpa_notification_service) =
-		sc_consensus_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone());
-	net_config.add_notification_protocol(grandpa_protocol_config);
+        &client
+            .block_hash(0)
+            .ok()
+            .flatten()
+            .expect("Genesis block exists; qed"),
+        &config.chain_spec,
+    );
+
+    let mut net_config = sc_network::config::FullNetworkConfiguration::<
+        Block,
+        <Block as sp_runtime::traits::Block>::Hash,
+        N,
+    >::new(&config.network);
+	let metrics = N::register_notification_metrics(config.prometheus_registry());
+    let peer_store_handle = net_config.peer_store_handle();
+
+    let (grandpa_protocol_config, grandpa_notification_service) =
+        sc_consensus_grandpa::grandpa_peers_set_config::<_, N>(
+            grandpa_protocol_name.clone(),
+            metrics.clone(),
+            peer_store_handle,
+        );
+    net_config.add_notification_protocol(grandpa_protocol_config);
 
 	let warp_sync = Arc::new(sc_consensus_grandpa::warp_proof::NetworkProvider::new(
 		backend.clone(),

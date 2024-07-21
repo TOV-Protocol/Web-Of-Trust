@@ -23,60 +23,63 @@ scale-info = { version = "2.10.0", default-features = false, features = [
 	"derive",
 	"serde",
 ] }
+anyhow = { version = "1.0.81", default-features = false }
 
 # frame
-frame-support = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false, features = ["experimental"] }
-frame-system = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
-frame-try-runtime = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false, optional = true }
-frame-executive = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
+frame-support = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false, features = ["experimental"] }
+frame-system = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
+frame-try-runtime = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false, optional = true }
+frame-executive = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
 
 # frame pallets
-pallet-aura = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
-pallet-balances = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
-pallet-grandpa = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
-pallet-sudo = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
-pallet-timestamp = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
-pallet-transaction-payment = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
+pallet-babe = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
+pallet-balances = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
+pallet-grandpa = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
+pallet-sudo = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
+pallet-timestamp = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
+pallet-transaction-payment = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
+sc-consensus-babe = { git = 'https://github.com/TOV-Protocol/base-polkadot-sdk', branch = 'tov-substrate-v1.11.0', default-features = false }
+sc-consensus-babe-rpc = { git = 'https://github.com/TOV-Protocol/base-polkadot-sdk', branch = 'tov-substrate-v1.11.0', default-features = false }
 
 # primitives
-sp-api = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
-sp-block-builder = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
-sp-consensus-aura = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false, features = [
+sp-api = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
+sp-block-builder = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
+sp-consensus-babe = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false, features = [
 	"serde",
 ] }
-sp-consensus-grandpa = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false, features = [
+sp-consensus-grandpa = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false, features = [
 	"serde",
 ] }
-sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false, features = [
+sp-core = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false, features = [
 	"serde",
 ] }
-sp-inherents = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
-sp-offchain = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false, features = [
+sp-inherents = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
+sp-offchain = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
+sp-runtime = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false, features = [
 	"serde",
 ] }
-sp-session = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
-sp-std = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
-sp-storage = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
-sp-transaction-pool = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
-sp-version = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false, features = [
+sp-session = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
+sp-std = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
+sp-storage = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
+sp-transaction-pool = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
+sp-version = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false, features = [
 	"serde",
 ] }
-sp-genesis-builder = { default-features = false, git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0" }
+sp-genesis-builder = { default-features = false, git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0" }
 
 # RPC related
-frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
-pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false }
+frame-system-rpc-runtime-api = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
 
 # Used for runtime benchmarking
-frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false, optional = true }
-frame-system-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", default-features = false, optional = true }
+frame-benchmarking = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false, optional = true }
+frame-system-benchmarking = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false, optional = true }
 
 # The pallet in this template.
 pallet-template = { path = "../pallets/template", default-features = false }
 
 [build-dependencies]
-substrate-wasm-builder = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0", optional = true }
+substrate-wasm-builder = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", optional = true }
 
 [features]
 default = ["std"]
@@ -93,7 +96,7 @@ std = [
 	"frame-benchmarking?/std",
 	"frame-try-runtime?/std",
 
-	"pallet-aura/std",
+	"pallet-babe/std",
 	"pallet-balances/std",
 	"pallet-grandpa/std",
 	"pallet-sudo/std",
@@ -104,7 +107,7 @@ std = [
 
 	"sp-api/std",
 	"sp-block-builder/std",
-	"sp-consensus-aura/std",
+	"sp-consensus-babe/std",
 	"sp-consensus-grandpa/std",
 	"sp-core/std",
 	"sp-genesis-builder/std",
@@ -126,6 +129,7 @@ runtime-benchmarks = [
 	"frame-system-benchmarking/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
+	"pallet-babe/runtime-benchmarks",
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-sudo/runtime-benchmarks",
 	"pallet-template/runtime-benchmarks",
@@ -138,7 +142,7 @@ try-runtime = [
 	"frame-support/try-runtime",
 	"frame-system/try-runtime",
 	"frame-try-runtime/try-runtime",
-	"pallet-aura/try-runtime",
+	"pallet-babe/try-runtime",
 	"pallet-balances/try-runtime",
 	"pallet-grandpa/try-runtime",
 	"pallet-sudo/try-runtime",
@@ -148,4 +152,4 @@ try-runtime = [
 	"sp-runtime/try-runtime",
 ]
 
-experimental = ["pallet-aura/experimental"]
+experimental = []

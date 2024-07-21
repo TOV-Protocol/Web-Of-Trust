@@ -6,8 +6,24 @@
 
 .DS_Store
 
-# direnv files
-.envrc
+# The cache for chain data in container
+.local
+
+# direnv cache
 .direnv
 
-.vscode/settings.json
+# node modules
+**/node_modules/**
+
+# build folders
+arm-build
+build
+
+# Temporary files
+tmp
+
+# Local chain spec
+*local-spec*.json
+
+# Log files
+*.log
