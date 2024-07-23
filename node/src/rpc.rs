@@ -34,6 +34,8 @@ pub struct FullDeps<C, P, SC> {
 	pub pool: Arc<P>,
 	/// The SelectChain Strategy
 	pub select_chain: SC,
+	/// A copy of the chain spec.
+	pub chain_spec: Box<dyn sc_chain_spec::ChainSpec>,
 	/// Whether to deny unsafe calls
 	pub deny_unsafe: DenyUnsafe,
 	/// Manual seal command sink
@@ -66,7 +68,8 @@ where
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 
 	let mut module = RpcModule::new(());
-	let FullDeps { client, pool, select_chain, deny_unsafe, command_sink_opt, babe } = deps;
+	let FullDeps { client, pool, select_chain, chain_spec: _, deny_unsafe, command_sink_opt, babe } =
+		deps;
 
 	if let Some(babe) = babe {
 		let BabeDeps { babe_worker_handle, keystore } = babe;
@@ -79,10 +82,10 @@ where
 	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
 	module.merge(TransactionPayment::new(client).into_rpc())?;
 	if let Some(command_sink) = command_sink_opt {
-        // We provide the rpc handler with the sending end of the channel to allow the rpc
-        // send EngineCommands to the background block authorship task.
-        module.merge(ManualSeal::new(command_sink).into_rpc())?;
-    };
+		// We provide the rpc handler with the sending end of the channel to allow the rpc
+		// send EngineCommands to the background block authorship task.
+		module.merge(ManualSeal::new(command_sink).into_rpc())?;
+	};
 
 	// Extend this RPC with a custom API by using the following syntax.
 	// `YourRpcStruct` should have a reference to a client, which is needed

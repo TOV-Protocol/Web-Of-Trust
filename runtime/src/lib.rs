@@ -1,7 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+pub mod constants;
 
 use pallet_grandpa::AuthorityId as GrandpaId;
 use sp_api::impl_runtime_apis;
@@ -43,6 +42,12 @@ pub use sp_runtime::{Perbill, Permill};
 
 /// Import the template pallet.
 pub use pallet_template;
+
+/// Balance of an account.
+pub type Balance = u64;
+
+/// Block type.
+pub type Block = sp_runtime::generic::Block<Header, UncheckedExtrinsic>;
 
 /// An index to a block.
 pub type BlockNumber = u32;
