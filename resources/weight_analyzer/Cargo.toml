@@ -1,0 +1,21 @@
+[package]
+name = "weight-analyzer"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[lib]
+name = "weightanalyzer"
+path = "src/lib.rs"
+
+[dependencies]
+convert_case = { workspace = true }
+glob = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+subweight-core = { workspace = true }
+
+[features]
+std = []

@@ -1,0 +1,41 @@
+[package]
+authors.workspace = true
+description = "primitives for pallet distance"
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+name = "sp-distance"
+readme = "README.md"
+repository.workspace = true
+version.workspace = true
+
+[package.metadata.docs.rs]
+default-features = false
+targets = ["x86_64-unknown-linux-gnu"]
+
+[features]
+default = ["std"]
+std = [
+	"async-trait",
+	"codec/std",
+	"frame-support/std",
+	"scale-info/std",
+	"serde/std",
+	"sp-inherents/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"thiserror",
+]
+try-runtime = ["frame-support/try-runtime", "sp-runtime/try-runtime"]
+runtime-benchmarks = []
+
+[dependencies]
+async-trait = { workspace = true, optional = true }
+codec = { workspace = true, features = ["derive"] }
+frame-support = { workspace = true }
+scale-info = { workspace = true, features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
+sp-inherents = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+thiserror = { workspace = true, optional = true }

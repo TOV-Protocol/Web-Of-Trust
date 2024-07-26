@@ -1,0 +1,142 @@
+// Copyright 2021-2022 Axiom-Team
+//
+// This file is part of Duniter-v2S.
+//
+// Duniter-v2S is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, version 3 of the License.
+//
+// Duniter-v2S is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with Duniter-v2S. If not, see <https://www.gnu.org/licenses/>.
+
+#![cfg(feature = "runtime-benchmarks")]
+#![allow(clippy::multiple_bound_locations)]
+
+use super::*;
+
+use frame_benchmarking::{account, v2::*, whitelisted_caller};
+use frame_support::{pallet_prelude::IsType, traits::fungible::Mutate};
+use frame_system::RawOrigin;
+use pallet_balances::Pallet as Balances;
+
+use crate::Pallet;
+
+type BalanceOf<T> = <<T as Config>::Currency as fungible::Inspect<AccountIdOf<T>>>::Balance;
+
+#[benchmarks(
+        where
+        T: pallet_balances::Config,
+        T::Balance: From<u64>,
+        BalanceOf<T>: IsType<T::Balance>+From<T::Balance>
+)]
+mod benchmarks {
+    use super::*;
+
+    #[benchmark]
+    fn create_oneshot_account() {
+        let existential_deposit = T::ExistentialDeposit::get();
+        let caller = whitelisted_caller();
+        let balance = existential_deposit.saturating_mul((2).into());
+        let _ = <<T as pallet::Config>::Currency as Mutate<T::AccountId>>::set_balance(
+            &caller,
+            balance.into(),
+        );
+        let recipient: T::AccountId = account("recipient", 0, 1);
+        let recipient_lookup: <T::Lookup as StaticLookup>::Source =
+            T::Lookup::unlookup(recipient.clone());
+        let transfer_amount = existential_deposit;
+
+        #[extrinsic_call]
+        _(
+            RawOrigin::Signed(caller.clone()),
+            recipient_lookup,
+            transfer_amount.into(),
+        );
+
+        assert_eq!(Balances::<T>::free_balance(&caller), transfer_amount);
+        assert_eq!(
+            OneshotAccounts::<T>::get(&recipient),
+            Some(transfer_amount.into())
+        );
+    }
+
+    #[benchmark]
+    fn consume_oneshot_account() {
+        let existential_deposit = T::ExistentialDeposit::get();
+        let caller: T::AccountId = whitelisted_caller();
+        let balance = existential_deposit.saturating_mul((2).into());
+        OneshotAccounts::<T>::insert(caller.clone(), Into::<BalanceOf<T>>::into(balance));
+        // Deposit into a normal account is more expensive than into a oneshot account
+        // so we create the recipient account with an existential deposit.
+        let recipient: T::AccountId = account("recipient", 0, 1);
+        let recipient_lookup: <T::Lookup as StaticLookup>::Source =
+            T::Lookup::unlookup(recipient.clone());
+        let _ = <<T as pallet::Config>::Currency as Mutate<T::AccountId>>::set_balance(
+            &recipient,
+            existential_deposit.into(),
+        );
+
+        #[extrinsic_call]
+        _(
+            RawOrigin::Signed(caller.clone()),
+            BlockNumberFor::<T>::zero(),
+            Account::<<T::Lookup as StaticLookup>::Source>::Normal(recipient_lookup),
+        );
+
+        assert_eq!(OneshotAccounts::<T>::get(&caller), None);
+        assert_eq!(
+            Balances::<T>::free_balance(&recipient),
+            existential_deposit.saturating_mul((3).into())
+        );
+    }
+
+    #[benchmark]
+    fn consume_oneshot_account_with_remaining() {
+        let existential_deposit = T::ExistentialDeposit::get();
+        let caller: T::AccountId = whitelisted_caller();
+        let balance = existential_deposit.saturating_mul((2).into());
+        OneshotAccounts::<T>::insert(caller.clone(), Into::<BalanceOf<T>>::into(balance));
+        // Deposit into a normal account is more expensive than into a oneshot account
+        // so we create the recipient accounts with an existential deposits.
+        let recipient1: T::AccountId = account("recipient1", 0, 1);
+        let recipient1_lookup: <T::Lookup as StaticLookup>::Source =
+            T::Lookup::unlookup(recipient1.clone());
+        let _ = <<T as pallet::Config>::Currency as Mutate<T::AccountId>>::set_balance(
+            &recipient1,
+            existential_deposit.into(),
+        );
+        let recipient2: T::AccountId = account("recipient2", 1, 1);
+        let recipient2_lookup: <T::Lookup as StaticLookup>::Source =
+            T::Lookup::unlookup(recipient2.clone());
+        let _ = <<T as pallet::Config>::Currency as Mutate<T::AccountId>>::set_balance(
+            &recipient2,
+            existential_deposit.into(),
+        );
+
+        #[extrinsic_call]
+        _(
+            RawOrigin::Signed(caller.clone()),
+            BlockNumberFor::<T>::zero(),
+            Account::<<T::Lookup as StaticLookup>::Source>::Normal(recipient1_lookup),
+            Account::<<T::Lookup as StaticLookup>::Source>::Normal(recipient2_lookup),
+            existential_deposit.into(),
+        );
+
+        assert_eq!(OneshotAccounts::<T>::get(&caller), None);
+        assert_eq!(
+            Balances::<T>::free_balance(&recipient1),
+            existential_deposit.saturating_mul((2).into())
+        );
+        assert_eq!(
+            Balances::<T>::free_balance(&recipient2),
+            existential_deposit.saturating_mul((2).into())
+        );
+    }
+
+    impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);
+}

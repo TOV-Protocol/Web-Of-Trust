@@ -62,7 +62,7 @@ substrate-frame-rpc-system = { git = "https://github.com/TOV-Protocol/base-polka
 frame-benchmarking-cli = { git = "https://github.com/TOV-Protocol/base-polkadot-sdk", branch = "tov-substrate-v1.11.0", default-features = false }
 
 # Local Dependencies
-node-template-runtime = { path = "../runtime" }
+node-runtime = { path = "../runtime" }
 
 # CLI-specific dependencies
 [build-dependencies]
@@ -75,7 +75,7 @@ runtime-benchmarks = [
 	"frame-benchmarking-cli/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
 	"sc-service/runtime-benchmarks",
-	"node-template-runtime/runtime-benchmarks",
+	"node-runtime/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 ]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
@@ -83,6 +83,6 @@ runtime-benchmarks = [
 try-runtime = [
 	"frame-system/try-runtime",
 	"pallet-transaction-payment/try-runtime",
-	"node-template-runtime/try-runtime",
+	"node-runtime/try-runtime",
 	"sp-runtime/try-runtime",
 ]

@@ -1,0 +1,72 @@
+[package]
+authors.workspace = true
+description = "duniter pallet for web of trust"
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+name = "pallet-duniter-wot"
+repository.workspace = true
+version.workspace = true
+
+[features]
+default = ["std"]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-certification/runtime-benchmarks",
+	"pallet-distance/runtime-benchmarks",
+	"pallet-identity/runtime-benchmarks",
+	"pallet-membership/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+]
+std = [
+	"codec/std",
+	"frame-benchmarking?/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-certification/std",
+	"pallet-distance/std",
+	"pallet-identity/std",
+	"pallet-membership/std",
+	"scale-info/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-membership/std",
+	"sp-runtime/std",
+	"sp-state-machine/std",
+	"sp-std/std",
+]
+try-runtime = [
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"pallet-certification/try-runtime",
+	"pallet-distance/try-runtime",
+	"pallet-identity/try-runtime",
+	"pallet-membership/try-runtime",
+	"sp-membership/try-runtime",
+	"sp-runtime/try-runtime",
+]
+
+[package.metadata.docs.rs]
+default-features = false
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = { workspace = true, features = ["derive"] }
+frame-benchmarking = { workspace = true, optional = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+pallet-certification = { workspace = true }
+pallet-distance = { workspace = true }
+pallet-identity = { workspace = true }
+pallet-membership = { workspace = true }
+scale-info = { workspace = true, features = ["derive"] }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+sp-membership = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+
+[dev-dependencies]
+sp-state-machine = { workspace = true }

@@ -1,0 +1,19 @@
+[package]
+authors.workspace = true
+description = "primitives for duniter runtime"
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+name = "duniter-primitives"
+readme = "README.md"
+repository.workspace = true
+version.workspace = true
+
+[package.metadata.docs.rs]
+default-features = false
+targets = ["x86_64-unknown-linux-gnu"]
+
+[features]
+default = ["std"]
+std = []
+try-runtime = []
